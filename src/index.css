@@ -1,0 +1,2 @@
+@import 'tailwindcss';
+:root{font-family:Inter,'Segoe UI',Arial,sans-serif;color:#e8ecf3;background:#111820;font-synthesis:none}*{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}p{color:#aab4c2;line-height:1.55}h1,h2{letter-spacing:-.03em}h2{font-size:18px;margin:0 0 15px}
