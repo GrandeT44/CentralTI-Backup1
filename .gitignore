@@ -22,3 +22,21 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Variáveis de ambiente e credenciais
+.env
+.env.*
+!.env.example
+
+# Cobertura de testes
+coverage
+
+# Cache e arquivos temporários
+.vite
+*.tsbuildinfo
+
+# Arquivos de configuração locais
+docker-compose.override.yml
+
+# Dados locais de banco de dados
+postgres_data/

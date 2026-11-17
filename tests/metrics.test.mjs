@@ -19,4 +19,8 @@ test('data respeita São Paulo e heatmap conta conclusão e progresso', () => {
 test('intervalos efetivos sobrepostos contam uma vez', () => {
  assert.equal(unionMinutes([{start:'2026-11-16T10:00:00Z',end:'2026-11-16T12:00:00Z'},{start:'2026-11-16T11:00:00Z',end:'2026-11-16T13:00:00Z'}]),180)
 })
+test('heatmap distingue progresso manual de mudanças automáticas', () => {
+ const data={tickets:[{...ticket,progress:[{authorId:'ana',at:'2026-11-16T12:00:00Z',text:'Status alterado para Em andamento'},{authorId:'ana',at:'2026-11-16T13:00:00Z',text:'Diagnóstico documentado'}]}]}
+ assert.equal(heatmapDays(data,'ana')[0].progress,1)
+})
 
