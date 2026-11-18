@@ -1,5 +1,6 @@
 import type { Data, KnowledgeArticle, PlannedActivity, Ticket, WorkSession } from './domain'
 import { seed } from './data'
+import { ensureAdministrator } from './features/administrator'
 const KEY = 'lanobrasil-ti-v1'
 export interface Repository {
  read(): Data
@@ -15,8 +16,8 @@ export interface Repository {
 }
 const mutate = (change: (data: Data) => Data) => { const next = change(repository.read()); repository.save(next); return next }
 export const repository: Repository = {
- read() { try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) as Data : structuredClone(seed) } catch { return structuredClone(seed) } },
- save(data) { localStorage.setItem(KEY, JSON.stringify(data)) },
+ read() { try { const raw = localStorage.getItem(KEY); return ensureAdministrator(raw ? JSON.parse(raw) as Data : structuredClone(seed)) } catch { return ensureAdministrator(structuredClone(seed)) } },
+ save(data) { localStorage.setItem(KEY, JSON.stringify(ensureAdministrator(data))) },
  createTicket(ticket) { return mutate(data => ({ ...data, tickets: [ticket, ...data.tickets] })) },
  updateTicket(ticket) { return mutate(data => ({ ...data, tickets: data.tickets.map(item => item.id === ticket.id ? ticket : item) })) },
  createPlan(plan) { return mutate(data => ({ ...data, plans: [...data.plans, plan] })) },

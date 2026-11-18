@@ -1,0 +1,6 @@
+.admin-access-backdrop{position:fixed;inset:0;z-index:140;display:grid;place-items:center;padding:18px;background:rgba(4,9,16,.78);backdrop-filter:blur(5px)}
+.admin-access-dialog{width:min(100%,390px);padding:25px;border:1px solid #49627c;border-radius:17px;background:#192737;box-shadow:0 25px 80px rgba(0,0,0,.5);color:#e7f0f9}
+.admin-access-heading{display:flex;align-items:flex-start;justify-content:space-between}.admin-access-heading>span{display:grid;place-items:center;width:42px;height:42px;border-radius:11px;background:#284664;color:#a9d1f5}.admin-access-heading button{border:0;background:transparent;color:#9fb4c8;cursor:pointer}
+.admin-access-dialog h2{font-size:21px;letter-spacing:-.04em;margin:18px 0 5px}.admin-access-dialog>p{font-size:12px;line-height:1.5;color:#9db2c5;margin:0 0 22px}
+.admin-access-dialog label{display:block;font-size:11px;font-weight:700;color:#c7d7e7}.admin-access-dialog label>div{display:flex;align-items:center;gap:8px;margin-top:8px;padding:0 10px;border:1px solid #46617b;border-radius:8px;background:#101d2a;color:#91aec8}.admin-access-dialog input{flex:1;min-width:0;width:100%;border:0;margin:0;background:transparent;box-shadow:none!important;color:#f1f7ff;font-size:13px}
+.admin-access-dialog .admin-access-error{color:#f3b1a4;margin:9px 0 0}.admin-access-dialog>.button{width:100%;justify-content:center;margin-top:20px}

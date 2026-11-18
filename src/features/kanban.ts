@@ -11,10 +11,15 @@ export function normalizeBoard(board?: KanbanBoard): KanbanBoard {
   const order = board?.columns?.map(column => column.id) ?? []
   const completeOrder = [...DEFAULT_COLUMNS.map(column => column.id).filter(id => !order.includes(id)), ...order]
   columns.sort((a, b) => completeOrder.indexOf(a.id) - completeOrder.indexOf(b.id))
-  return { columns, placements: board?.placements ?? {} }
+  return { columns, placements: board?.placements ?? {}, drafts: board?.drafts ?? [], compact: board?.compact ?? false }
+}
+export function consumeDraft(board: KanbanBoard | undefined, draftId: string): KanbanBoard {
+  const current = normalizeBoard(board)
+  return { ...current, drafts: current.drafts?.filter(draft => draft.id !== draftId) }
 }
 export function automaticColumn(ticket: Ticket) {
-  if (ticket.status === 'Concluído' || ticket.status === 'Cancelado' || ticket.type === 'quick') return 'done'
+  if (ticket.status === 'Concluído' || ticket.status === 'Cancelado') return 'done'
+  if (ticket.status === 'Aberto') return 'todo'
   return 'doing'
 }
 export function columnForTicket(ticket: Ticket, board: KanbanBoard) {

@@ -1,0 +1,15 @@
+.ticket-extras{padding:25px 0;border-bottom:1px solid #263545}
+.ticket-extras-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}
+.ticket-extras-head h2{display:flex;align-items:center;gap:8px;font-size:15px;margin:0}
+.ticket-extras-head button{display:flex;align-items:center;gap:6px;border:0;background:transparent;color:#9dcaff;font-size:11px}
+.ticket-extras>p{color:#91a4b8;font-size:11px;line-height:1.5}
+.ticket-extras-form{background:#182838;border:1px solid #32475b;border-radius:11px;padding:16px}
+.ticket-extras-form label{display:block;color:#bacbdb;font-size:11px;margin-bottom:12px}
+.ticket-extras-form input,.ticket-extras-form textarea{display:block;width:100%;margin-top:5px;padding:8px;border:1px solid #344b61;border-radius:7px;background:#111e2b;color:#e6f0fa;font-size:11px}
+.ticket-extras-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.ticket-extras-actions{display:flex;justify-content:flex-end;gap:8px}
+.ticket-extras-form>small{display:block;color:#94abc0;font-size:10px;margin-bottom:12px}
+.ticket-extras-error{color:#ffc5b6;font-size:11px}
+.ticket-convert{border:0;background:transparent;color:#9fc8ec;font-size:11px;padding:8px 0;margin-top:4px}
+.ticket-convert:hover{text-decoration:underline}
+@media(max-width:540px){.ticket-extras-grid{grid-template-columns:1fr}}
