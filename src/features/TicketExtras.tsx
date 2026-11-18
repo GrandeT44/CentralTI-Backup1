@@ -1,3 +1,4 @@
+import { createId } from '../id.ts'
 import { useState } from 'react'
 import { Check, Pencil, X } from 'lucide-react'
 import type { Data, Ticket, WorkSession } from '../domain'
@@ -26,11 +27,11 @@ export function TicketExtras({ ticket, data, save, active }: Props) {
       const at = fromSaoPaulo(openedAt)
       const duration = minutes.trim() ? Number(minutes) : undefined
       if (duration !== undefined && (!Number.isInteger(duration) || duration <= 0)) throw new Error('Informe uma duração positiva em minutos.')
-      const next: Ticket = { ...ticket, employee: employee.trim() || undefined, category: category.trim() || 'Não categorizado', solution: solution.trim() || undefined, openedAt: at, completedAt: ticket.status === 'Concluído' && ticket.completedAt === ticket.openedAt ? at : ticket.completedAt, progress: [...ticket.progress, { id: crypto.randomUUID(), at: new Date().toISOString(), authorId: active, text: 'Detalhes do atendimento atualizados.', kind: 'progress' }] }
+      const next: Ticket = { ...ticket, employee: employee.trim() || undefined, category: category.trim() || 'Não categorizado', solution: solution.trim() || undefined, openedAt: at, completedAt: ticket.status === 'Concluído' && ticket.completedAt === ticket.openedAt ? at : ticket.completedAt, progress: [...ticket.progress, { id: createId(), at: new Date().toISOString(), authorId: active, text: 'Detalhes do atendimento atualizados.', kind: 'progress' }] }
       let nextSessions = data.sessions
       if (duration !== undefined && sessions.length === 0) {
         const end = new Date(at)
-        const session: WorkSession = { id: crypto.randomUUID(), ticketId: ticket.id, technicianId: active, start: new Date(end.getTime() - duration * 60000).toISOString(), end: end.toISOString(), note: 'Duração informada após o registro' }
+        const session: WorkSession = { id: createId(), ticketId: ticket.id, technicianId: active, start: new Date(end.getTime() - duration * 60000).toISOString(), end: end.toISOString(), note: 'Duração informada após o registro' }
         nextSessions = [...nextSessions, session]
         next.durationMinutes = duration
         if (active !== ticket.ownerId) next.participants = next.participants.map(item => item.technicianId === active ? { ...item, worked: true } : item)

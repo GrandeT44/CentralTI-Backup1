@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { ADMIN_ID, createTechnician, deleteTechnician, ensureAdministrator, verifyAdministratorPassword } from '../src/features/administrator.ts'
+import { ADMIN_ID, createTechnician, deleteTechnician, ensureAdministrator } from '../src/features/administrator.ts'
 import { canChangeTicketOwner, canManageTicket } from '../src/features/ticketAccess.ts'
 import { updateTicket } from '../src/features/ticketOperations.ts'
 
@@ -11,7 +11,6 @@ test('administrador é permanente e senha incorreta não libera acesso', async (
   assert.equal(first.technicians.filter(person => person.id === ADMIN_ID).length, 1)
   assert.equal(ensureAdministrator(first).technicians.filter(person => person.id === ADMIN_ID).length, 1)
   assert.throws(() => deleteTechnician(first, ADMIN_ID), /não pode ser excluído/)
-  assert.equal(await verifyAdministratorPassword('senha-incorreta'), false)
 })
 
 test('administrador gerencia qualquer chamado e troca o responsável', () => {

@@ -16,3 +16,12 @@ export interface KanbanPlacement { columnId: string; statusAtMove: Status }
 export interface KanbanDraft { id: string; title: string; createdAt: string }
 export interface KanbanBoard { columns: KanbanColumn[]; placements: Record<string, KanbanPlacement>; drafts?: KanbanDraft[]; compact?: boolean }
 export interface Data { technicians: Technician[]; tickets: Ticket[]; sessions: WorkSession[]; plans: PlannedActivity[]; articles: KnowledgeArticle[]; kanbanBoards?: Record<string, KanbanBoard>; personalNotes?: Record<string, string> }
+export type WorkspaceData = Pick<Data, 'tickets' | 'sessions' | 'plans' | 'articles' | 'kanbanBoards'>
+export type WorkspaceChange<T> = { before: T | null; after: T | null }
+export type WorkspaceChanges = {
+ tickets?: WorkspaceChange<Ticket>[]
+ sessions?: WorkspaceChange<WorkSession>[]
+ plans?: WorkspaceChange<PlannedActivity>[]
+ articles?: WorkspaceChange<KnowledgeArticle>[]
+ kanbanBoards?: { id: string; before: KanbanBoard | null; after: KanbanBoard | null }[]
+}

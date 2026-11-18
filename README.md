@@ -1,15 +1,46 @@
 # Central TI — Lanobrasil
 
-Aplicação de demonstração para gestão de chamados, planejamento, conhecimento e relatórios da equipe de TI.
+Aplicação local para chamados, planejamento, conhecimento e relatórios da equipe de TI.
 
-## Executar localmente
+## Executar
+
+Requer **Node.js 26 ou superior**.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Acesse o endereço informado pelo Vite. Para build: `npm run build`. Para lint: `npm run lint`. Para os testes dos cálculos centrais: `npm test` (validado com Node.js 26).
+Abra o endereço mostrado pelo Vite. O comando inicia o Vite e a API local. No PowerShell do Windows, também é possível iniciar com `node server/dev.mjs`; isso evita a pergunta do `npm.cmd` sobre finalizar o arquivo em lotes ao interromper com Ctrl+C.
+
+Para produção:
+
+```sh
+npm run build
+npm start
+```
+
+Abra `http://127.0.0.1:3001`. O banco SQLite fica em `local-data/central-ti.sqlite`. Use `npm run backup` para gerar uma cópia consistente na mesma pasta antes de operações importantes.
+
+Para acessar pela rede no PowerShell:
+
+```powershell
+$env:HOST = '0.0.0.0'
+$env:PORT = '8080'
+npm.cmd start
+```
+
+Abra `http://IP-DO-COMPUTADOR:8080` nos demais computadores. Depois de atualizar o código, **reinicie o processo do servidor** para carregar as novas rotas da API.
+
+## Primeiro acesso
+
+Entre como **Administrador TI** com a senha de administrador previamente definida. No Perfil, em **Perfis da equipe**, gere um código para cada técnico existente. O técnico escolhe o próprio perfil na tela inicial, informa o código e cria sua senha de no mínimo 10 caracteres. O código é usado uma única vez. O administrador pode redefinir a senha de qualquer técnico; as sessões anteriores são encerradas. O perfil administrador não pode ser desativado.
+
+## Onde ficam os dados
+
+Perfis, senhas protegidas por hash, sessões, fotos e notas pessoais ficam no SQLite local. As notas são carregadas apenas após autenticação no perfil correspondente. Trocar de perfil encerra a sessão e exige a senha do próximo perfil.
+
+Chamados, registros de trabalho, planejamentos, artigos e quadros Kanban também ficam no SQLite. O espaço compartilhado começa vazio em uma instalação nova. Todas as telas autenticadas usam o mesmo conjunto de dados; alterações feitas em outro computador aparecem em até alguns segundos. Alterações em registros diferentes são combinadas. Se um registro mudar no servidor entre a leitura e a gravação, a gravação antiga é recusada para evitar sobrescrever o trabalho de outra pessoa. Mantenha a página aberta enquanto houver um aviso de envio pendente. O aplicativo não usa o armazenamento do navegador para persistir dados.
 
 ## Docker Compose
 
@@ -17,20 +48,12 @@ Acesse o endereço informado pelo Vite. Para build: `npm run build`. Para lint: 
 docker compose up --build
 ```
 
-Acesse `http://localhost:8080`. O contêiner serve o build de produção com Nginx e fallback para as rotas React.
+Abra `http://localhost:8080`. O volume `central_ti_data` mantém o banco entre recriações do contêiner. A porta fica acessível somente no próprio computador por padrão.
 
-## Dados e limitações
+## Verificação
 
-Os dados de demonstração ficam no `localStorage` deste navegador, na chave `lanobrasil-ti-v1`. O perfil permanente de administrador exige senha para ser selecionado e pode editar qualquer chamado, criar técnicos e excluir perfis sem histórico; perfis com histórico são desativados para preservar os registros. Essa senha é verificada localmente e a sessão dura até sair do perfil ou recarregar a página. Não há autenticação de servidor, sincronização entre navegadores, banco de dados ou backend: quem controla o navegador ainda pode alterar o armazenamento e o código local. O repositório em `src/repository.ts` pode ser trocado por uma API futuramente.
-
-Disponível: painel com evolução semanal e mensal, criação e acompanhamento de chamados, registro de progresso e trabalho efetivo, Kanban pessoal, blocos de ideia, notas por técnico, registro de trabalho nos chamados, heatmap anual, artigos com múltiplas soluções e chamados relacionados, relatórios gerais e individuais e exportação CSV.
-
-O layout usa navegação no cabeçalho. O Dashboard permite alternar entre visão da equipe e chamados ligados ao técnico ativo; os cards de chamados abrem seus detalhes. As demais telas mantêm seus fluxos atuais enquanto o redesenho visual é aprovado por etapas.
-
-O Perfil funciona como área pessoal: reúne atuação, atividade recente, contribuições e heatmap anual. O técnico ativo pode carregar uma foto para o próprio perfil; a imagem é processada no navegador e salva junto aos dados locais. O quadro foi movido para Planejamento. Ele usa os chamados existentes e permite criar blocos pessoais em **A fazer**, que podem virar chamados pelo formulário existente. O modo compacto e as notas pessoais são salvos por técnico. A página de Planejamento agora exibe apenas notas pessoais e o Kanban. Os registros antigos de planos e trabalho permanecem no armazenamento local; novos registros de tempo são feitos nos chamados. Colunas personalizadas e posições são salvas no mesmo repositório local. Ao mover um chamado entre as colunas padrão, seu status é atualizado e a mudança entra no histórico.
-
-A página Chamados oferece filtros rápidos e avançados combináveis, busca por título, número, descrição e funcionário atendido, ordenação, agrupamento recolhível e paginação. A lista usa linhas compactas alinhadas. O detalhe reúne descrição, atualizações, timeline, propriedades, colaboradores, tempo registrado e confirmação de conclusão. Criador e colaboradores associados podem administrar o chamado; somente o criador pode trocar o responsável e convidar colaboradores. O botão **Concluir** abre a confirmação no detalhe. O responsável principal é reconhecido uma vez; cada colaborador pode receber uma contribuição por chamado concluído ao registrar tempo, publicar atualização confirmada como trabalho realizado ou concluir uma etapa como executor. A ação **Registrar atendimento concluído** abre diretamente o formulário de chamado rápido.
-
-A criação ocorre em modais sobre a tela atual. O atendimento rápido exige apenas título; o cronômetro opcional desconta pausas e cria uma sessão de trabalho somente ao salvar. Dados como descrição, funcionário, solução, data retroativa e duração podem ser completados depois no detalhe. A atividade prolongada aceita descrição em Markdown, responsável, prioridade, prazo, participantes e checklist; a solução é registrada posteriormente. O planejamento não entra no cálculo de tempo efetivo. Em relatórios de equipe, os intervalos são unidos separadamente por técnico.
-
-As restrições de edição usam o técnico ativo selecionado na interface de demonstração; sem autenticação de servidor, elas não são uma barreira de segurança contra alterações manuais no armazenamento local. Nesta fase não há API, banco de dados, PDF ou Excel. A aplicação está estruturada para que o repositório local seja substituído por uma API posteriormente. O build Docker foi preparado, mas precisa ser executado em um ambiente com Docker instalado.
+```sh
+npm run build
+npm run lint
+npm test
+```

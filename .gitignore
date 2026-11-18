@@ -40,3 +40,5 @@ docker-compose.override.yml
 
 # Dados locais de banco de dados
 postgres_data/
+local-data/
+*.sqlite*

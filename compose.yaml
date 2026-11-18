@@ -2,5 +2,10 @@ services:
   frontend:
     build: .
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - central_ti_data:/app/local-data
     restart: unless-stopped
+
+volumes:
+  central_ti_data:

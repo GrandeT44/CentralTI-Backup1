@@ -41,3 +41,18 @@
 - Adicionado bloco de notas pessoal com salvamento local automático. A barra horizontal do dia foi removida; planos e trabalho registrado permanecem disponíveis em uma agenda em lista e nos formulários existentes.
 - A página Planejamento foi simplificada conforme revisão: bloco de notas movido para o topo e removidas as seções de atividades do dia, planejar atividade e registrar trabalho. Os registros já salvos foram preservados.
 - Adicionado perfil permanente de administrador, desbloqueado por senha na troca de técnico, com edição de qualquer chamado e troca de responsável. O Perfil do administrador ganhou criação, exclusão e desativação de técnicos; perfis com histórico são preservados como desativados.
+
+## 18/11/2026
+
+- Criado banco SQLite local para perfis, senhas, sessões, fotos e notas pessoais; acesso às notas passou a exigir autenticação no perfil correspondente.
+- Técnicos criam a senha no primeiro acesso com código único emitido pelo administrador. O administrador pode redefinir senhas, criar e desativar perfis, além de importar perfis e notas antigos do navegador.
+- A aplicação local e o contêiner agora incluem API própria e armazenamento persistente. Build, lint e 33 testes passaram, incluindo persistência das notas após reinício e isolamento entre perfis.
+- Corrigido o login no modo de desenvolvimento: a API usa uma porta local livre e o Vite encaminha as requisições para essa instância; a origem local do Vite é aceita sem abrir a validação do servidor de produção.
+- Tornado o encerramento da API e do SQLite seguro contra chamadas repetidas; verificados interrupção, reinício e resposta da API após reiniciar. Build, lint e 35 testes passaram.
+- A tela de entrada passou a tentar reconectar quando a API ainda está iniciando e orienta a abrir o endereço atual do Vite. Corrigida a escolha inicial do perfil após a lista carregar. Confirmado que a instância nova em `localhost:5174` responde, enquanto a instância antiga em `localhost:5173` usa uma API indisponível.
+- Substituídas as chamadas diretas a `crypto.randomUUID()` por uma geração de IDs compatível com acesso HTTP pelo IP da rede. A correção abrange criação e conclusão de chamados, etapas, atualizações, participantes, registros de trabalho, Kanban e conhecimento. O servidor da rede entregou o build atualizado; build, lint e 37 testes passaram.
+- Movidos chamados, sessões de trabalho, planejamentos, artigos e quadros Kanban para dados compartilhados no SQLite. As telas atualizam os registros de outros computadores periodicamente; alterações em registros distintos são combinadas e conflitos no mesmo registro são recusados.
+- Adicionada migração inicial pelo navegador com o histórico principal, importação complementar de outros navegadores e arquivos JSON, com cópias de importações conflitantes preservadas no banco. Novos chamados recebem IDs únicos também quando criados ao mesmo tempo em computadores diferentes.
+- Importações de chamados com o mesmo número antigo agora recebem IDs distintos e atualizam as referências de trabalho, planejamento, artigos e Kanban. Criado `npm run backup` e gerada uma cópia do banco existente antes da migração.
+- A pedido da equipe, encerrada a fase de testes: removidas as cópias e a migração pelo navegador, assim como os fluxos de importação antigos. Novas instalações começam com dados de trabalho vazios no SQLite; perfis e autenticação permanecem.
+- Limpo o banco compartilhado desta instalação: 7 chamados, 3 registros de trabalho e 1 artigo de teste foram removidos, assim como notas e fotos de teste. Os perfis e suas senhas foram mantidos para permitir o acesso.

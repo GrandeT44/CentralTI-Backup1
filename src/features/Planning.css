@@ -21,3 +21,4 @@
 @media(max-width:700px){.planning-notes-panel{grid-template-columns:1fr;gap:10px}.planning-notes-panel>p,.planning-notes-panel textarea{grid-column:1;grid-row:auto}.planning-notes-panel textarea{height:150px}.planning-page .personal-kanban>.profile-section-heading{align-items:flex-start;flex-direction:column}.planning-board-actions{width:100%}.planning-board-actions .button{flex:1;justify-content:center}}
 @media(max-width:460px){.planning-hero-count{display:none}.planning-notes-panel{padding:16px}}
 @media(prefers-reduced-motion:reduce){.planning-page .kanban-card,.planning-page .kanban-draft{transition:none}}
+.planning-notes-error{color:#ffb2a8;font-size:13px;margin:9px 0 0}

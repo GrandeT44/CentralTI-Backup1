@@ -14,7 +14,7 @@ export async function prepareProfilePhoto(file: File): Promise<string> {
     const side = Math.min(image.naturalWidth, image.naturalHeight)
     context.drawImage(image, (image.naturalWidth - side) / 2, (image.naturalHeight - side) / 2, side, side, 0, 0, 256, 256)
     const result = canvas.toDataURL('image/webp', 0.82)
-    if (result.length > 400_000) throw new Error('A foto ficou grande demais para o armazenamento local.')
+    if (result.length > 400_000) throw new Error('A foto ficou grande demais para o perfil.')
     return result
   } finally { URL.revokeObjectURL(url) }
 }

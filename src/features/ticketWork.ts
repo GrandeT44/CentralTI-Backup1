@@ -1,3 +1,4 @@
+import { createId } from '../id.ts'
 import type { Data, TicketProgressEntry } from '../domain'
 import { addCollaborator, canManageTicket } from './ticketAccess.ts'
 import { localDateTime } from '../dateTime.ts'
@@ -11,6 +12,6 @@ export function recordTicketWork(data: Data, ticketId: string, technicianId: str
   const minutes = Math.round((endMs - startMs) / 60000)
   const linked = addCollaborator(ticket, technicianId)
   const participants = technicianId === ticket.ownerId ? linked.participants : linked.participants.map(participant => participant.technicianId === technicianId ? { ...participant, worked: true } : participant)
-  const progress: TicketProgressEntry = { id: crypto.randomUUID(), at: recordedAt.toISOString(), authorId: technicianId, text: `Trabalho registrado: ${minutes} min em ${localDateTime(start).replace('T', ' ')}–${localDateTime(end).slice(11)}${note.trim() ? ` · ${note.trim()}` : ''}`, kind: 'work' }
-  return { ...data, sessions: [...data.sessions, { id: crypto.randomUUID(), ticketId, technicianId, start, end, note: note.trim() || undefined }], tickets: data.tickets.map(item => item.id === ticketId ? { ...ticket, participants, progress: [...ticket.progress, progress] } : item) }
+  const progress: TicketProgressEntry = { id: createId(), at: recordedAt.toISOString(), authorId: technicianId, text: `Trabalho registrado: ${minutes} min em ${localDateTime(start).replace('T', ' ')}–${localDateTime(end).slice(11)}${note.trim() ? ` · ${note.trim()}` : ''}`, kind: 'work' }
+  return { ...data, sessions: [...data.sessions, { id: createId(), ticketId, technicianId, start, end, note: note.trim() || undefined }], tickets: data.tickets.map(item => item.id === ticketId ? { ...ticket, participants, progress: [...ticket.progress, progress] } : item) }
 }

@@ -1,37 +1,24 @@
 import { useState } from 'react'
-import { RotateCcw, ShieldCheck, Trash2, UserPlus } from 'lucide-react'
+import { KeyRound, RotateCcw, ShieldCheck, Trash2, UserPlus } from 'lucide-react'
 import type { Data } from '../domain'
-import { ADMIN_ID, createTechnician, deleteTechnician, profileHasHistory } from './administrator'
+import { profileRepository } from '../repository'
+import { ADMIN_ID } from './administrator'
 import { TechnicianAvatar } from '../components/TechnicianAvatar'
 import './AdminProfiles.css'
 
-type Props = { data: Data; save: (data: Data) => void }
-
-export function AdminProfiles({ data, save }: Props) {
+type Props = { data: Data; refreshProfiles: () => Promise<void> }
+export function AdminProfiles({ data, refreshProfiles }: Props) {
   const [name, setName] = useState('')
   const [role, setRole] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-
-  const create = (event: React.FormEvent) => {
-    event.preventDefault()
-    try { save(createTechnician(data, name, role)); setMessage(`Perfil de ${name.trim()} criado.`); setName(''); setRole(''); setError('') }
-    catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível criar o perfil.') }
-  }
-  const remove = (id: string) => {
-    const person = data.technicians.find(item => item.id === id)
-    if (!person || id === ADMIN_ID) return
-    const hasHistory = profileHasHistory(data, id)
-    const action = hasHistory ? 'desativar' : 'excluir'
-    if (!window.confirm(`Deseja ${action} o perfil de ${person.name}?${hasHistory ? ' O histórico de chamados será preservado.' : ''}`)) return
-    try { save(deleteTechnician(data, id)); setMessage(hasHistory ? `${person.name} foi desativado; o histórico foi preservado.` : `Perfil de ${person.name} excluído.`); setError('') }
-    catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível excluir o perfil.') }
-  }
-  const restore = (id: string) => { save({ ...data, technicians: data.technicians.map(person => person.id === id ? { ...person, archived: false } : person) }); setMessage('Perfil reativado.'); setError('') }
-
-  return <section className="admin-profiles"><div className="admin-profiles-heading"><span><ShieldCheck size={21} /></span><div><span className="section-kicker">ADMINISTRAÇÃO</span><h2>Perfis da equipe</h2><p>Crie perfis e gerencie quem aparece no seletor de técnicos.</p></div></div>
-    <form className="admin-profile-form" onSubmit={create}><label>Nome do técnico<input value={name} onChange={event => setName(event.target.value)} placeholder="Nome e sobrenome" required /></label><label>Função<input value={role} onChange={event => setRole(event.target.value)} placeholder="Técnico de TI" /></label><button className="button primary" type="submit"><UserPlus size={16} /> Criar perfil</button></form>
-    {error && <p className="admin-profile-error" role="alert">{error}</p>}{message && <p className="admin-profile-message" role="status">{message}</p>}
-    <div className="admin-profile-list">{data.technicians.map(person => <div className="admin-profile-row" key={person.id}><TechnicianAvatar technician={person} /><div><strong>{person.name}</strong><small>{person.role}{person.archived ? ' · Desativado' : ''}</small></div>{person.id === ADMIN_ID ? <span className="admin-profile-protected"><ShieldCheck size={14} /> Permanente</span> : person.archived ? <button type="button" className="admin-profile-restore" onClick={() => restore(person.id)}><RotateCcw size={14} /> Reativar</button> : <button type="button" className="admin-profile-delete" onClick={() => remove(person.id)}><Trash2 size={14} /> {profileHasHistory(data, person.id) ? 'Desativar' : 'Excluir'}</button>}</div>)}</div>
-  </section>
+  const [code, setCode] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [resetId, setResetId] = useState('')
+  const run = async (operation: () => Promise<unknown>, success: string) => { try { await operation(); await refreshProfiles(); setMessage(success); setError('') } catch (cause) { setError(cause instanceof Error ? cause.message : 'Operação não concluída.') } }
+  const create = async (event: React.FormEvent) => { event.preventDefault(); try { const result = await profileRepository.create(name, role); await refreshProfiles(); setCode(result.setupCode); setMessage(`Perfil de ${result.name} criado. Entregue o código de primeiro acesso ao técnico.`); setName(''); setRole(''); setError('') } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível criar o perfil.') } }
+  const remove = (id: string) => { const person = data.technicians.find(item => item.id === id); if (!person || id === ADMIN_ID || !window.confirm(`Desativar o perfil de ${person.name}? O histórico será preservado.`)) return; void run(() => profileRepository.archive(id), `${person.name} foi desativado. O histórico foi preservado.`) }
+  const issueCode = async (id: string) => { try { const result = await profileRepository.issueCode(id); setCode(result.code); setMessage('Código de primeiro acesso gerado. Entregue-o ao técnico.'); setError('') } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível gerar o código.') } }
+  const reset = async (event: React.FormEvent) => { event.preventDefault(); if (!resetId) return; await run(() => profileRepository.resetPassword(resetId, newPassword), 'Senha alterada. As sessões anteriores foram encerradas.'); setNewPassword(''); setResetId('') }
+  return <section className="admin-profiles"><div className="admin-profiles-heading"><span><ShieldCheck size={21} /></span><div><span className="section-kicker">ADMINISTRAÇÃO</span><h2>Perfis da equipe</h2><p>Crie perfis, distribua códigos de primeiro acesso e redefina senhas.</p></div></div><form className="admin-profile-form" onSubmit={create}><label>Nome do técnico<input value={name} onChange={event => setName(event.target.value)} placeholder="Nome e sobrenome" required /></label><label>Função<input value={role} onChange={event => setRole(event.target.value)} placeholder="Técnico de TI" /></label><button className="button primary" type="submit"><UserPlus size={16} /> Criar perfil</button></form>{code && <div className="admin-profile-code" role="status"><strong>Código de primeiro acesso</strong><code>{code}</code><small>Copie agora: o código não será exibido novamente.</small></div>}{error && <p className="admin-profile-error" role="alert">{error}</p>}{message && <p className="admin-profile-message" role="status">{message}</p>}{resetId && <form className="admin-password-form" onSubmit={reset}><label>Nova senha para {data.technicians.find(item => item.id === resetId)?.name}<input type="password" minLength={10} maxLength={128} value={newPassword} onChange={event => setNewPassword(event.target.value)} required /></label><button className="button primary" type="submit">Definir senha</button><button className="button" type="button" onClick={() => setResetId('')}>Cancelar</button></form>}<div className="admin-profile-list">{data.technicians.map(person => <div className="admin-profile-row" key={person.id}><TechnicianAvatar technician={person} /><div><strong>{person.name}</strong><small>{person.role}{person.archived ? ' · Desativado' : ''}</small></div>{person.id === ADMIN_ID ? <span className="admin-profile-protected"><ShieldCheck size={14} /> Permanente</span> : <>{'passwordSet' in person && person.passwordSet === false && !person.archived && <button type="button" onClick={() => issueCode(person.id)}><KeyRound size={14} /> Código</button>}<button type="button" onClick={() => setResetId(person.id)}><KeyRound size={14} /> Redefinir senha</button>{person.archived ? <button type="button" onClick={() => void run(() => profileRepository.restore(person.id), 'Perfil reativado.')}><RotateCcw size={14} /> Reativar</button> : <button type="button" className="admin-profile-delete" onClick={() => remove(person.id)}><Trash2 size={14} /> Desativar</button>}</>}</div>)}</div></section>
 }

@@ -1,3 +1,4 @@
+import { createId } from '../id.ts'
 import type { Ticket } from '../domain'
 import { canChangeTicketOwner, canManageTicket, ticketCreatorId } from './ticketAccess.ts'
 
@@ -11,9 +12,9 @@ export function updateTicket(ticket: Ticket, patch: Patch, authorId: string, now
   const completedAt = status === 'Concluído' ? ticket.completedAt ?? now.toISOString() : undefined
   const text = changed.map(([key, value]) => key === 'status' ? `Status alterado para ${value}` : key === 'ownerId' ? `Responsável alterado para ${value}` : `Prioridade alterada para ${value}`).join('; ')
   const updated = { ...ticket, createdById: ticketCreatorId(ticket), ...patch, completedAt }
-  return { ...updated, progress: [...updated.progress, { id: crypto.randomUUID(), at: now.toISOString(), authorId, text, kind: patch.status === 'Concluído' ? 'completion' : patch.status ? 'status' : patch.ownerId ? 'owner' : 'priority' }] }
+  return { ...updated, progress: [...updated.progress, { id: createId(), at: now.toISOString(), authorId, text, kind: patch.status === 'Concluído' ? 'completion' : patch.status ? 'status' : patch.ownerId ? 'owner' : 'priority' }] }
 }
 export function convertQuickTicket(ticket: Ticket, authorId: string, now = new Date()): Ticket {
   if (ticket.type !== 'quick' || !canManageTicket(ticket, authorId)) return ticket
-  return { ...ticket, type: 'long', status: 'Em andamento', completedAt: undefined, createdById: ticketCreatorId(ticket), steps: ticket.steps ?? [], progress: [...ticket.progress, { id: crypto.randomUUID(), at: now.toISOString(), authorId, text: 'Atendimento rápido convertido em atividade prolongada.', kind: 'status' }] }
+  return { ...ticket, type: 'long', status: 'Em andamento', completedAt: undefined, createdById: ticketCreatorId(ticket), steps: ticket.steps ?? [], progress: [...ticket.progress, { id: createId(), at: now.toISOString(), authorId, text: 'Atendimento rápido convertido em atividade prolongada.', kind: 'status' }] }
 }

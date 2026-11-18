@@ -1,3 +1,4 @@
+import { createId } from '../id.ts'
 import type { Data, Priority, Ticket, TicketStep, WorkSession } from '../domain.ts'
 import { fromSaoPaulo } from '../dateTime.ts'
 
@@ -10,7 +11,7 @@ export const timerElapsedMs = (timer: TimerState, now: number) => timer.elapsedM
 
 export type QuickInput = { title: string; technicianId: string; now?: Date; durationMinutes?: number }
 export type LongInput = { title: string; description: string; creatorId: string; ownerId: string; category: string; priority: Priority; dueDate?: string; openedAt?: string; participantIds: string[]; status: 'Aberto' | 'Em andamento'; steps: TicketStep[] }
-const nextId = (data: Data) => `TI-${Math.max(1042, ...data.tickets.map(ticket => Number(ticket.id.replace(/^TI-/, '')) || 0)) + 1}`
+const nextId = (data: Data) => `TI-${Math.max(1042, ...data.tickets.map(ticket => Number.parseInt(ticket.id.replace(/^TI-/, ''), 10) || 0)) + 1}-${createId().slice(0, 8).toUpperCase()}`
 
 export function createQuickTicket(data: Data, input: QuickInput): { data: Data; ticket: Ticket } {
   const title = input.title.trim()
@@ -19,8 +20,8 @@ export function createQuickTicket(data: Data, input: QuickInput): { data: Data; 
   if (input.durationMinutes !== undefined && (!Number.isFinite(input.durationMinutes) || input.durationMinutes <= 0)) throw new Error('Informe uma duração positiva.')
   const now = input.now ?? new Date()
   const at = now.toISOString()
-  const ticket: Ticket = { id: nextId(data), type: 'quick', title, description: '', createdById: input.technicianId, createdAt: at, ownerId: input.technicianId, participants: [], category: 'Não categorizado', priority: 'Média', status: 'Concluído', openedAt: at, completedAt: at, progress: [{ id: crypto.randomUUID(), at, authorId: input.technicianId, text: 'Atendimento registrado como concluído.', kind: 'completion' }] }
-  const session: WorkSession[] = input.durationMinutes === undefined ? [] : [{ id: crypto.randomUUID(), ticketId: ticket.id, technicianId: input.technicianId, start: new Date(now.getTime() - input.durationMinutes * 60000).toISOString(), end: at, note: 'Atendimento cronometrado' }]
+  const ticket: Ticket = { id: nextId(data), type: 'quick', title, description: '', createdById: input.technicianId, createdAt: at, ownerId: input.technicianId, participants: [], category: 'Não categorizado', priority: 'Média', status: 'Concluído', openedAt: at, completedAt: at, progress: [{ id: createId(), at, authorId: input.technicianId, text: 'Atendimento registrado como concluído.', kind: 'completion' }] }
+  const session: WorkSession[] = input.durationMinutes === undefined ? [] : [{ id: createId(), ticketId: ticket.id, technicianId: input.technicianId, start: new Date(now.getTime() - input.durationMinutes * 60000).toISOString(), end: at, note: 'Atendimento cronometrado' }]
   if (input.durationMinutes !== undefined) ticket.durationMinutes = input.durationMinutes
   return { ticket, data: { ...data, tickets: [ticket, ...data.tickets], sessions: [...data.sessions, ...session] } }
 }

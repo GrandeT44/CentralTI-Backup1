@@ -1,3 +1,4 @@
+import { createId } from '../id.ts'
 import { useRef, useState } from 'react'
 import { Bold, Check, Code2, FileText, Italic, Link2, List, ListOrdered, Pencil, Strikethrough, Underline, X } from 'lucide-react'
 import type { Data, Ticket } from '../domain'
@@ -44,7 +45,7 @@ export function TicketDescription({ ticket, data, save, active }: Props) {
   const textarea = useRef<HTMLTextAreaElement>(null)
   const showEditor = () => { setDraft(ticket.description ?? ''); setError(''); setEditing(true); requestAnimationFrame(() => textarea.current?.focus()) }
   const cancel = () => { setDraft(ticket.description ?? ''); setSelection(null); setEditing(false); setError('') }
-  const saveDescription = () => { if (!canEdit) return; try { const value = draft.trim(); if (value === (ticket.description ?? '')) { setEditing(false); return } const next: Ticket = { ...ticket, description: value, progress: [...ticket.progress, { id: crypto.randomUUID(), at: new Date().toISOString(), authorId: active, text: 'Descrição atualizada.', kind: 'progress' }] }; save({ ...data, tickets: data.tickets.map(item => item.id === ticket.id ? next : item) }); setEditing(false); setSelection(null); setError('') } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível salvar a descrição.') } }
+  const saveDescription = () => { if (!canEdit) return; try { const value = draft.trim(); if (value === (ticket.description ?? '')) { setEditing(false); return } const next: Ticket = { ...ticket, description: value, progress: [...ticket.progress, { id: createId(), at: new Date().toISOString(), authorId: active, text: 'Descrição atualizada.', kind: 'progress' }] }; save({ ...data, tickets: data.tickets.map(item => item.id === ticket.id ? next : item) }); setEditing(false); setSelection(null); setError('') } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível salvar a descrição.') } }
   const rememberSelection = () => { const field = textarea.current; if (!field) return; setSelection(field.selectionStart < field.selectionEnd ? { start: field.selectionStart, end: field.selectionEnd } : null) }
   const replaceSelection = (replacement: string, selectStart: number, selectEnd: number) => { const range = selection; if (!range) return; setDraft(current => current.slice(0, range.start) + replacement + current.slice(range.end)); setSelection(null); requestAnimationFrame(() => { textarea.current?.focus(); textarea.current?.setSelectionRange(selectStart, selectEnd) }) }
   const wrap = (before: string, after = before) => { if (!selection) return; const selected = draft.slice(selection.start, selection.end); replaceSelection(before + selected + after, selection.start + before.length, selection.end + before.length) }

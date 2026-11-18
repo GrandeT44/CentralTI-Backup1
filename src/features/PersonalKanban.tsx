@@ -1,3 +1,4 @@
+import { createId } from '../id.ts'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CalendarDays, GripVertical, LayoutGrid, List, Plus, Pencil, Trash2, Users } from 'lucide-react'
@@ -26,8 +27,8 @@ export function PersonalKanban({ data, save, technicianId }: Props) {
   const [editingDraft, setEditingDraft] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
   const saveBoard = (next: KanbanBoard, nextTickets = data.tickets) => save({ ...data, tickets: nextTickets, kanbanBoards: { ...data.kanbanBoards, [technicianId]: next } })
-  const addColumn = (event: React.FormEvent) => { event.preventDefault(); const name = newName.trim(); if (!name) return; saveBoard({ ...board, columns: [...board.columns, { id: crypto.randomUUID(), name, custom: true }] }); setAdding(false); setNewName('') }
-  const addDraft = (event: React.FormEvent) => { event.preventDefault(); const title = draftTitle.trim(); if (!title) return; saveBoard({ ...board, drafts: [...(board.drafts ?? []), { id: crypto.randomUUID(), title, createdAt: new Date().toISOString() }] }); setDraftTitle('') }
+  const addColumn = (event: React.FormEvent) => { event.preventDefault(); const name = newName.trim(); if (!name) return; saveBoard({ ...board, columns: [...board.columns, { id: createId(), name, custom: true }] }); setAdding(false); setNewName('') }
+  const addDraft = (event: React.FormEvent) => { event.preventDefault(); const title = draftTitle.trim(); if (!title) return; saveBoard({ ...board, drafts: [...(board.drafts ?? []), { id: createId(), title, createdAt: new Date().toISOString() }] }); setDraftTitle('') }
   const renameDraft = (id: string) => { const title = editingTitle.trim(); if (title) saveBoard({ ...board, drafts: board.drafts?.map(draft => draft.id === id ? { ...draft, title } : draft) }); setEditingDraft(null) }
   const removeDraft = (id: string) => saveBoard({ ...board, drafts: board.drafts?.filter(draft => draft.id !== id) })
   const reorder = (columnId: string, index: number) => { const from = board.columns.findIndex(column => column.id === columnId); if (from < 0 || index < 0 || index >= board.columns.length || from === index) return; const columns = [...board.columns]; const [column] = columns.splice(from, 1); columns.splice(index, 0, column); saveBoard({ ...board, columns }) }
