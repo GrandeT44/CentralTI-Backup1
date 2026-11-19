@@ -56,3 +56,22 @@
 - Importações de chamados com o mesmo número antigo agora recebem IDs distintos e atualizam as referências de trabalho, planejamento, artigos e Kanban. Criado `npm run backup` e gerada uma cópia do banco existente antes da migração.
 - A pedido da equipe, encerrada a fase de testes: removidas as cópias e a migração pelo navegador, assim como os fluxos de importação antigos. Novas instalações começam com dados de trabalho vazios no SQLite; perfis e autenticação permanecem.
 - Limpo o banco compartilhado desta instalação: 7 chamados, 3 registros de trabalho e 1 artigo de teste foram removidos, assim como notas e fotos de teste. Os perfis e suas senhas foram mantidos para permitir o acesso.
+- Reformulada a base de Conhecimento com busca por conteúdo, filtro de categoria, lista legível, estados vazios e artigo em seções. Criar e editar artigos agora abre um formulário sobre a tela, sem interromper a navegação.
+- O detalhe de cada chamado recomenda até três artigos pela coincidência de termos no título e na descrição, com prioridade para artigos vinculados ao chamado. A regra funciona localmente sobre os artigos compartilhados; build, lint e 42 testes passaram.
+- A Base de Conhecimento evoluiu para biblioteca técnica: busca por conteúdo e etiquetas, categorias com contagens, ordenação por atualização ou título e leitura com Markdown seguro e cópia de comandos.
+- O formulário em modal foi substituído por editor em página própria, com soluções independentes, contexto, confirmação explícita, vínculo pesquisável de chamados, metadados opcionais de autoria e histórico de alterações. Artigos antigos continuam compatíveis. Build, lint e 44 testes passaram.
+- Alinhado o visual da biblioteca de Conhecimento ao Início e a Chamados: título no mesmo formato, entrada suave, cores e superfícies coerentes, categorias com ícones e linhas de artigos mais compactas. Criadas classes compartilhadas para cabeçalhos e animação das próximas páginas.
+- Guias de Conhecimento ganharam apresentação comunitária com foto e nome do criador, favoritos pessoais persistidos no SQLite e pedidos de edição para outros técnicos. Só o criador ou administrador pode aprovar; cada pedido aprovado aplica a proposta uma vez e gera um crédito de contribuição ao proponente, visível também no Perfil. Testados acesso, aprovação, recusa, isolamento de favoritos e persistência após reinício; build, lint e 46 testes passaram.
+- Na aba Conhecimento, avisos de guias e sugestões passaram a usar o mesmo cartão temporário dos chamados. Pedidos de edição foram organizados na coluna lateral, com lista expansível e revisão em janela sobreposta.
+- O editor de guias agora reúne todo o texto em um campo com ferramentas de formatação e permite anexar imagens ao próprio artigo. Conteúdo, fotos e propostas aprovadas ficam vinculados ao guia no SQLite; testadas persistência, aprovação e recusa.
+
+## 19/11/2026
+
+- No detalhe dos chamados, as recomendações da Base de Conhecimento foram movidas para depois dos dados e etapas da atividade. O painel passou a ter linhas compactas, motivo da recomendação em cada artigo e acesso direto à base.
+- Alinhada a coluna de autores e favoritos na lista de guias da Base de Conhecimento. Nomes longos agora são abreviados visualmente dentro de uma largura fixa, sem deslocar os controles entre as linhas.
+- A exclusão de técnicos agora revoga o acesso e limpa senha, foto e notas, preservando apenas a identidade necessária ao histórico. Ana, Bruno e Carla não reaparecem após reiniciar o banco; o Administrador TI permanece permanente.
+- Artigos cujo responsável foi excluído exibem aviso na biblioteca e no detalhe. Técnicos podem solicitar a responsabilidade de artigos órfãos e chamados abertos sem responsável; o administrador recebe uma fila para aprovar ou recusar.
+- Chamados abertos passam automaticamente ao primeiro participante ativo quando o responsável é excluído. Chamados concluídos mantêm o responsável histórico para preservar a contabilização de conclusões.
+- Quando uma reclamação de artigo é aprovada, a biblioteca e o detalhe mostram o novo responsável, mantendo o criador original identificado. Sugestões de edição pendentes de um artigo que ficou órfão são encerradas para evitar aprovações com uma versão de propriedade antiga.
+- A lista de perfis ativos agora é atualizada periodicamente nos outros computadores; uma sessão excluída perde o acesso e a tela de entrada remove o perfil da lista.
+- Pedidos recusados voltam a permitir uma nova solicitação sem precisar recarregar a página.

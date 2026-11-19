@@ -67,6 +67,25 @@ export function createAppServer({ dbPath, staticDir = resolve('dist'), serveStat
           const body = await readBody(request, 20_000_000)
           return json(response, 200, store.applyWorkspaceChanges(body.changes, current.id))
         }
+        if (path === '/api/ownership-claims') {
+          if (request.method === 'GET') return json(response, 200, { claims: store.ownershipClaims(current.id) })
+          if (request.method === 'POST') { const body = await readBody(request); return json(response, 201, { claim: store.submitOwnershipClaim(body.kind, body.resourceId, current.id) }) }
+        }
+        if (request.method === 'GET' && path === '/api/me/favorites') return json(response, 200, { ids: store.favoriteArticles(current.id) })
+        if (request.method === 'GET' && path === '/api/me/knowledge-contributions') return json(response, 200, { count: store.articleContributionCount(current.id) })
+        const favoriteMatch = path.match(/^\/api\/knowledge\/([^/]+)\/favorite$/)
+        if (favoriteMatch && request.method === 'PUT') {
+          const body = await readBody(request)
+          if (typeof body.favorite !== 'boolean') return json(response, 400, { error: 'Estado do favorito inválido.' })
+          return json(response, 200, { ids: store.setArticleFavorite(current.id, favoriteMatch[1], body.favorite) })
+        }
+        const requestMatch = path.match(/^\/api\/knowledge\/([^/]+)\/requests(?:\/([^/]+)\/(approve|reject))?$/)
+        if (requestMatch) {
+          const [, articleId, requestId, action] = requestMatch
+          if (!requestId && request.method === 'GET') return json(response, 200, { requests: store.articleRequests(articleId, current.id) })
+          if (!requestId && request.method === 'POST') { const body = await readBody(request, 20_000_000); return json(response, 201, { request: store.submitArticleRequest(articleId, current.id, body.proposed) }) }
+          if (requestId && request.method === 'POST') return json(response, 200, store.resolveArticleRequest(articleId, requestId, current.id, action === 'approve'))
+        }
         if (request.method === 'PUT' && path === '/api/me/notes') {
           const body = await readBody(request)
           if (typeof body.notes !== 'string' || body.notes.length > 200_000) return json(response, 400, { error: 'As notas excedem o limite permitido.' })
@@ -80,21 +99,23 @@ export function createAppServer({ dbPath, staticDir = resolve('dist'), serveStat
           return json(response, 200, { profile: store.publicProfile(store.profile(current.id)) })
         }
         if (current.id !== ADMIN_ID) return json(response, 403, { error: 'Acesso exclusivo do administrador.' })
+        const claimMatch = path.match(/^\/api\/admin\/ownership-claims\/([\w-]+)\/(approve|reject)$/)
+        if (claimMatch && request.method === 'POST') return json(response, 200, store.resolveOwnershipClaim(claimMatch[1], current.id, claimMatch[2] === 'approve'))
         if (request.method === 'POST' && path === '/api/admin/profiles') {
           const body = await readBody(request)
           if (!validName(body.name) || (body.role !== undefined && typeof body.role !== 'string')) return json(response, 400, { error: 'Informe um nome válido.' })
-          if (store.listProfiles(true).some(item => item.name.toLocaleLowerCase('pt-BR') === body.name.trim().toLocaleLowerCase('pt-BR'))) return json(response, 409, { error: 'Já existe um perfil com esse nome.' })
+          if (store.listProfiles(true).some(item => !item.deleted && item.name.toLocaleLowerCase('pt-BR') === body.name.trim().toLocaleLowerCase('pt-BR'))) return json(response, 409, { error: 'Já existe um perfil com esse nome.' })
           return json(response, 201, store.createProfile(body.name.trim(), body.role?.trim() || 'Técnico de TI'))
         }
         const match = path.match(/^\/api\/admin\/profiles\/([\w-]+)(?:\/(code|password|restore))?$/)
         if (match) {
           const [, id, action] = match
           const profile = store.profile(id)
-          if (!profile || id === ADMIN_ID) return json(response, 403, { error: 'Perfil indisponível para esta operação.' })
+          if (!profile || profile.deleted || id === ADMIN_ID) return json(response, 403, { error: 'Perfil indisponível para esta operação.' })
           if (request.method === 'POST' && action === 'code') return profile.password_hash ? json(response, 409, { error: 'Este perfil já tem senha. Use Redefinir senha.' }) : json(response, 200, { code: store.issueSetupCode(id) })
           if (request.method === 'POST' && action === 'password') { const body = await readBody(request); if (!validPassword(body.password)) return json(response, 400, { error: 'Use uma senha de 10 a 128 caracteres.' }); store.resetPassword(id, body.password); return json(response, 200, { ok: true }) }
           if (request.method === 'POST' && action === 'restore') { store.restore(id); return json(response, 200, { ok: true }) }
-          if (request.method === 'DELETE' && !action) { store.archive(id); return json(response, 200, { ok: true }) }
+          if (request.method === 'DELETE' && !action) return json(response, 200, store.deleteProfile(id))
         }
         return json(response, 404, { error: 'Recurso não encontrado.' })
       }

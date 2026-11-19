@@ -43,11 +43,18 @@ test('espaço compartilhado inicia vazio, sincroniza e persiste sem usar armazen
     const changed = { ...first, title: 'Título atualizado' }
     assert.equal((await call(base, '/api/workspace/changes', 'POST', { changes: { tickets: [{ before: first, after: changed }] } }, admin.cookie)).status, 200)
     assert.equal((await call(base, '/api/workspace/changes', 'POST', { changes: { tickets: [{ before: first, after: { ...first, status: 'Concluído' } }] } }, ana.cookie)).status, 409)
+    const article = { id: 'kb-1', title: 'Rede instável', category: 'Rede', symptoms: 'Queda de conexão', procedures: 'Testar rota', solutions: [{ id: 'solution-1', text: 'Reiniciar equipamento' }], ticketIds: [first.id], authorId: 'ana' }
+    assert.equal((await call(base, '/api/workspace/changes', 'POST', { changes: { articles: [{ before: null, after: article }] } })).status, 401)
+    assert.equal((await call(base, '/api/workspace/changes', 'POST', { changes: { articles: [{ before: null, after: article }] } }, ana.cookie)).status, 200)
+    assert.equal((await call(base, '/api/workspace', 'GET', undefined, ana.cookie)).body.data.articles[0].id, article.id)
+    const revised = { ...article, tags: ['rede'], updatedAt: '2026-11-18T14:00:00Z', solutions: [...article.solutions, { id: 'solution-2', text: 'Trocar cabo', authorId: 'ana' }] }
+    assert.equal((await call(base, '/api/workspace/changes', 'POST', { changes: { articles: [{ before: article, after: revised }] } }, ana.cookie)).status, 200)
     await new Promise(resolve => instance.server.close(resolve))
     instance = createAppServer({ dbPath, serveStatic: false })
     await new Promise(resolve => instance.server.listen(0, '127.0.0.1', resolve))
     base = `http://127.0.0.1:${instance.server.address().port}`
     assert.equal((await call(base, '/api/workspace', 'GET', undefined, ana.cookie)).body.data.tickets[0].title, changed.title)
+    assert.deepEqual((await call(base, '/api/workspace', 'GET', undefined, ana.cookie)).body.data.articles[0], revised)
   } finally {
     await new Promise(resolve => instance.server.close(resolve))
     rmSync(directory, { recursive: true, force: true })

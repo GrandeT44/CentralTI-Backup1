@@ -12,6 +12,7 @@ import { AppHeader } from './layouts/AppHeader'
 import { Dashboard } from './pages/Dashboard'
 import { Reports } from './features/Reports'
 import { Knowledge, Article } from './features/Knowledge'
+import { KnowledgeEditor } from './features/KnowledgeEditor'
 import { Planning } from './features/Planning'
 import { ProfileLogin } from './features/ProfileLogin'
 import { ensureAdministrator } from './features/administrator'
@@ -45,8 +46,10 @@ function Layout({ context }: { context: Context }) {
           <Route path="/chamados/novo" element={<LegacyCreateRoute />} />
           <Route path="/chamados/:ticketId" element={<TicketDetail data={context.data} save={context.save} active={context.active} />} />
           <Route path="/planejamento" element={<Planning data={context.data} save={context.save} active={context.active} notes={context.notes} notesError={context.notesError} saveNotes={context.saveNotes} />} />
-          <Route path="/conhecimento" element={<Knowledge data={context.data} save={context.save} />} />
-          <Route path="/conhecimento/:articleId" element={<Article data={context.data} save={context.save} />} />
+          <Route path="/conhecimento" element={<Knowledge data={context.data} save={context.save} active={context.active} />} />
+          <Route path="/conhecimento/novo" element={<KnowledgeEditor data={context.data} save={context.save} active={context.active} />} />
+          <Route path="/conhecimento/:articleId/editar" element={<KnowledgeEditor data={context.data} save={context.save} active={context.active} />} />
+          <Route path="/conhecimento/:articleId" element={<Article data={context.data} save={context.save} active={context.active} />} />
           <Route path="/relatorios" element={<Reports data={context.data} />} />
           <Route path="/perfil" element={<Profile data={context.data} save={context.save} active={context.active} refreshProfiles={context.refreshProfiles} />} />
         </Routes>
@@ -127,6 +130,11 @@ export default function App() {
   const activeId = session?.profile.id
   useEffect(() => {
     if (!activeId) return
+    const timer = window.setInterval(() => { void profileRepository.list().then(result => mergeProfiles(result.profiles)).catch(() => {}) }, 10000)
+    return () => window.clearInterval(timer)
+  }, [activeId, mergeProfiles])
+  useEffect(() => {
+    if (!activeId) return
     let alive = true
     const poll = async () => {
       if (pending.current) return
@@ -134,11 +142,11 @@ export default function App() {
         const response = await workspaceRepository.load(revision.current)
         if (alive) setServerUpgradeNeeded(false)
         if (alive && !pending.current && response.data) applyRemote(response)
-      } catch (cause) { if (alive) { if (cause instanceof ApiError && cause.status === 404) setServerUpgradeNeeded(true); else if (cause instanceof ApiError && cause.status === 401) { setChosenId(activeId); setSession(null); setError('Sua sessão expirou. Entre novamente para continuar.') } else setSyncMessage('Não foi possível atualizar os dados compartilhados. Verifique a conexão com o servidor.') } }
+      } catch (cause) { if (alive) { if (cause instanceof ApiError && cause.status === 404) setServerUpgradeNeeded(true); else if (cause instanceof ApiError && cause.status === 401) { setChosenId(activeId); setSession(null); setError('Sua sessão expirou. Entre novamente para continuar.'); void profileRepository.list().then(result => mergeProfiles(result.profiles)).catch(() => {}) } else setSyncMessage('Não foi possível atualizar os dados compartilhados. Verifique a conexão com o servidor.') } }
     }
     const timer = window.setInterval(() => { void poll() }, 3000)
     return () => { alive = false; window.clearInterval(timer) }
-  }, [activeId, applyRemote])
+  }, [activeId, applyRemote, mergeProfiles])
 
   const save = (next: Data) => {
     const normalized = ensureAdministrator(next)
