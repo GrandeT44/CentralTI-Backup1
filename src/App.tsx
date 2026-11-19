@@ -21,7 +21,7 @@ import './styles/redesign.css'
 
 type Context = {
   data: Data; save: (data: Data) => void; active: string; switchProfile: (id: string) => void
-  notes: string; notesError: string; saveNotes: (notes: string) => void; refreshProfiles: () => Promise<void>
+  notes: string; notesError: string; saveNotes: (notes: string) => void; refreshProfiles: () => Promise<void>; refreshWorkspace: () => Promise<void>
   syncMessage: string; dismissMessage: () => void
 }
 
@@ -49,7 +49,7 @@ function Layout({ context }: { context: Context }) {
           <Route path="/conhecimento" element={<Knowledge data={context.data} save={context.save} active={context.active} />} />
           <Route path="/conhecimento/novo" element={<KnowledgeEditor data={context.data} save={context.save} active={context.active} />} />
           <Route path="/conhecimento/:articleId/editar" element={<KnowledgeEditor data={context.data} save={context.save} active={context.active} />} />
-          <Route path="/conhecimento/:articleId" element={<Article data={context.data} save={context.save} active={context.active} />} />
+          <Route path="/conhecimento/:articleId" element={<Article data={context.data} save={context.save} active={context.active} refreshWorkspace={context.refreshWorkspace} />} />
           <Route path="/relatorios" element={<Reports data={context.data} />} />
           <Route path="/perfil" element={<Profile data={context.data} save={context.save} active={context.active} refreshProfiles={context.refreshProfiles} />} />
         </Routes>
@@ -204,5 +204,5 @@ export default function App() {
   if (loading) return <div className="profile-login-page">Carregando dados...</div>
   if (!session) return <ProfileLogin profiles={profiles} initialId={chosenId} onLogin={onLogin} error={error} />
   if (!workspaceReady) return <main className="profile-login-page"><section className="profile-login-card"><h1>{serverUpgradeNeeded ? 'Reinicie o servidor local' : 'Aguardando dados compartilhados'}</h1><p>{serverUpgradeNeeded ? 'Feche o processo antigo e execute npm.cmd start novamente.' : 'Não foi possível carregar os dados do servidor. Verifique a conexão e atualize a página.'}</p>{syncMessage && <p role="alert">{syncMessage}</p>}<button type="button" className="button" onClick={() => switchProfile('')}>Voltar ao acesso</button></section></main>
-  return <BrowserRouter><Layout context={{ data, save, active: session.profile.id, switchProfile, notes, notesError, saveNotes, refreshProfiles, syncMessage, dismissMessage: () => setSyncMessage('') }} /></BrowserRouter>
+  return <BrowserRouter><Layout context={{ data, save, active: session.profile.id, switchProfile, notes, notesError, saveNotes, refreshProfiles, refreshWorkspace: loadWorkspace, syncMessage, dismissMessage: () => setSyncMessage('') }} /></BrowserRouter>
 }

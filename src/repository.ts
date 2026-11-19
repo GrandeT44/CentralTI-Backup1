@@ -16,12 +16,16 @@ export const workspaceRepository = {
  apply: (changes: WorkspaceChanges) => api<WorkspaceResponse>('/workspace/changes', 'POST', { changes }),
 }
 export const knowledgeRepository = {
+ deleteArticle: (articleId: string, expectedUpdatedAt: string | null) => api<{ ok: boolean; revision: number }>(`/knowledge/${encodeURIComponent(articleId)}`, 'DELETE', { expectedUpdatedAt }),
  favorites: () => api<{ ids: string[] }>('/me/favorites'),
  favorite: (articleId: string, favorite: boolean) => api<{ ids: string[] }>(`/knowledge/${encodeURIComponent(articleId)}/favorite`, 'PUT', { favorite }),
  requests: (articleId: string) => api<{ requests: import('./domain').KnowledgeEditRequest[] }>(`/knowledge/${encodeURIComponent(articleId)}/requests`),
  submitRequest: (articleId: string, proposed: import('./domain').KnowledgeArticle) => api<{ request: import('./domain').KnowledgeEditRequest }>(`/knowledge/${encodeURIComponent(articleId)}/requests`, 'POST', { proposed }),
  resolveRequest: (articleId: string, requestId: string, approve: boolean) => api<{ approved: boolean; revision: number }>(`/knowledge/${encodeURIComponent(articleId)}/requests/${encodeURIComponent(requestId)}/${approve ? 'approve' : 'reject'}`, 'POST'),
  contributionCount: () => api<{ count: number }>('/me/knowledge-contributions'),
+}
+export const reportRepository = {
+ knowledgeContributionCounts: () => api<{ counts: Record<string, number>; events: { technicianId: string; at: string }[] }>('/reports/knowledge-contributions'),
 }
 export const ownershipRepository = {
  list: () => api<{ claims: OwnershipClaim[] }>('/ownership-claims'),

@@ -19,9 +19,14 @@ export function makeWorkspaceStore(db) {
   const canEditTicket = (ticket, actor) => isAdmin(actor) || (ticket.createdById ?? ticket.ownerId) === actor || ticket.ownerId === actor || ticket.participants?.some(item => item.technicianId === actor)
   const persist = (revision, data) => { update.run(revision, JSON.stringify(data)); return { revision, data } }
   const articleOwner = article => article.ownerId === null ? null : article.ownerId ?? article.authorId ?? 'central-ti-administrador'
+  const clearArticleLinks = id => {
+    db.prepare('DELETE FROM knowledge_favorites WHERE article_id=?').run(id)
+    db.prepare("DELETE FROM knowledge_edit_requests WHERE article_id=? AND status='pending'").run(id)
+    db.prepare("DELETE FROM ownership_claims WHERE kind='article' AND resource_id=? AND status='pending'").run(id)
+  }
   const articleContent = article => ({ id: article.id, title: article.title, category: article.category, ownerId: article.ownerId, symptoms: article.symptoms, procedures: article.procedures, body: article.body ?? '', images: article.images ?? [], notes: article.notes ?? '', tags: article.tags ?? [], ticketIds: article.ticketIds ?? [], solutions: article.solutions?.map(item => ({ id: item.id, text: item.text, context: item.context ?? '', verified: !!item.verified })) ?? [] })
   const validProposal = (article, proposed) => proposed && proposed.id === article.id
-    && typeof proposed.title === 'string' && proposed.title.trim().length > 0 && proposed.title.length <= 250
+    && typeof proposed.title === 'string' && proposed.title.trim().length > 0 && proposed.title.length <= 100
     && typeof proposed.category === 'string' && typeof proposed.symptoms === 'string' && typeof proposed.procedures === 'string'
     && (proposed.ownerId === undefined || proposed.ownerId === null || typeof proposed.ownerId === 'string')
     && (proposed.body === undefined || typeof proposed.body === 'string')
@@ -38,6 +43,20 @@ export function makeWorkspaceStore(db) {
 
   return {
     workspace: read,
+    deleteArticle(id, actor, expectedUpdatedAt) {
+      return transaction(() => {
+        const state = read()
+        const index = state.data.articles.findIndex(item => item.id === id)
+        if (index < 0) throw failure(404, 'Artigo não encontrado.')
+        const article = state.data.articles[index]
+        if (!isAdmin(actor) && articleOwner(article) !== actor) throw failure(403, 'Somente o responsável ou o administrador pode excluir este artigo.')
+        if ((article.updatedAt ?? null) !== expectedUpdatedAt) throw failure(409, 'Este artigo foi alterado em outro computador. Atualize a página antes de excluí-lo.')
+        state.data.articles.splice(index, 1)
+        clearArticleLinks(id)
+        persist(state.revision + 1, state.data)
+        return { ok: true, revision: state.revision + 1 }
+      })
+    },
     applyWorkspaceChanges(changes, actor) {
       if (!changes || typeof changes !== 'object') throw failure(400, 'Alterações inválidas.')
       return transaction(() => {
@@ -81,7 +100,7 @@ export function makeWorkspaceStore(db) {
               if (!linked || !canEditTicket(linked, actor)) throw failure(403, 'Você não pode registrar trabalho neste chamado.')
             }
             if (key === 'tickets' && !entry.after && !isAdmin(actor)) throw failure(403, 'Somente o administrador pode excluir chamados.')
-            if (entry.after === null) data[key].splice(index, 1)
+            if (entry.after === null) { data[key].splice(index, 1); if (key === 'articles') clearArticleLinks(id) }
             else if (index >= 0) data[key][index] = entry.after
             else if (key === 'tickets') data[key].unshift(entry.after)
             else data[key].push(entry.after)
@@ -227,6 +246,8 @@ export function makeWorkspaceStore(db) {
       })
     },
     articleContributionCount(actor) { return db.prepare("SELECT COUNT(*) AS count FROM knowledge_edit_requests WHERE requester_id=? AND status='approved'").get(actor).count },
+    articleContributionCounts() { return Object.fromEntries(db.prepare("SELECT requester_id, COUNT(*) AS count FROM knowledge_edit_requests WHERE status='approved' GROUP BY requester_id").all().map(row => [row.requester_id, row.count])) },
+    articleContributionEvents() { return db.prepare("SELECT requester_id AS technicianId, reviewed_at AS at FROM knowledge_edit_requests WHERE status='approved' AND reviewed_at IS NOT NULL ORDER BY reviewed_at").all() },
   }
 }
 

@@ -73,6 +73,12 @@ export function createAppServer({ dbPath, staticDir = resolve('dist'), serveStat
         }
         if (request.method === 'GET' && path === '/api/me/favorites') return json(response, 200, { ids: store.favoriteArticles(current.id) })
         if (request.method === 'GET' && path === '/api/me/knowledge-contributions') return json(response, 200, { count: store.articleContributionCount(current.id) })
+        if (request.method === 'GET' && path === '/api/reports/knowledge-contributions') return json(response, 200, { counts: store.articleContributionCounts(), events: store.articleContributionEvents() })
+        const articleDeleteMatch = path.match(/^\/api\/knowledge\/([^/]+)$/)
+        if (articleDeleteMatch && request.method === 'DELETE') {
+          const body = await readBody(request)
+          return json(response, 200, store.deleteArticle(articleDeleteMatch[1], current.id, body.expectedUpdatedAt ?? null))
+        }
         const favoriteMatch = path.match(/^\/api\/knowledge\/([^/]+)\/favorite$/)
         if (favoriteMatch && request.method === 'PUT') {
           const body = await readBody(request)

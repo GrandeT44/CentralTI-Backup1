@@ -1,0 +1,5 @@
+.toast-viewport{position:fixed;right:24px;bottom:24px;z-index:1300;display:flex;flex-direction:column;align-items:stretch;gap:10px;width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow-y:auto;pointer-events:none;scrollbar-width:thin}
+.toast-viewport .creation-toast{position:relative;right:auto;bottom:auto;z-index:auto;width:100%;flex:none;pointer-events:auto;animation:toast-life 5s ease both}
+@keyframes toast-life{0%{opacity:0;transform:translateY(9px)}8%,82%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-7px)}}
+@media(max-width:700px){.toast-viewport{right:16px;bottom:16px}}
+@media(prefers-reduced-motion:reduce){.toast-viewport .creation-toast{animation:none}}

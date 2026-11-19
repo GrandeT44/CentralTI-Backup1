@@ -1,5 +1,6 @@
 import { createId } from '../id.ts'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowDown, ArrowUp, CalendarDays, Check, ChevronRight, Clock3, FolderKanban, Pause, Play, Plus, RotateCcw, Trash2, X, Zap } from 'lucide-react'
@@ -12,6 +13,7 @@ import type { TimerState } from './ticketCreationLogic'
 import { CreationContext, useTicketCreation } from './ticketCreationContext'
 import type { CreationMode, CreationOptions } from './ticketCreationContext'
 import './TicketCreation.css'
+import '../components/ToastViewport.css'
 
 type Mode = CreationMode
 export function CreateTicketButton({ children, mode, className, onClick }: { children: ReactNode; mode?: Mode; className?: string; onClick?: () => void }) { const creation = useTicketCreation(); return <button type="button" className={className} onClick={() => { onClick?.(); creation.open(mode) }}>{children}</button> }
@@ -23,13 +25,13 @@ export function TicketCreationProvider({ data, save, active, children }: { data:
   const [mode, setMode] = useState<Mode | null>(null)
   const [success, setSuccess] = useState<Ticket | null>(null)
   const [options, setOptions] = useState<CreationOptions>({})
-  useEffect(() => { if (!success) return; const timer = window.setTimeout(() => setSuccess(null), 6000); return () => window.clearTimeout(timer) }, [success])
+  useEffect(() => { if (!success) return; const timer = window.setTimeout(() => setSuccess(null), 5000); return () => window.clearTimeout(timer) }, [success])
   const opener = useRef<HTMLElement | null>(null)
   const open = (next: Mode = 'chooser', initial: CreationOptions = {}) => { opener.current = document.activeElement as HTMLElement; setSuccess(null); setOptions(initial); setMode(next) }
   const close = () => { setMode(null); requestAnimationFrame(() => opener.current?.focus()) }
   const created = (ticket: Ticket, repeat: boolean) => { setSuccess(ticket); setMode(null); if (repeat) requestAnimationFrame(() => setMode('quick')); else requestAnimationFrame(() => opener.current?.focus()) }
   const navigate = useNavigate()
-  return <CreationContext.Provider value={{ open }}>{children}{mode && <CreationModal key={`${mode}-${success?.id ?? ''}-${options.sourceDraftId ?? ''}`} mode={mode} options={options} setMode={setMode} data={data} save={save} active={active} close={close} created={created} />}{success && <div className="creation-toast" role="status"><span className="creation-toast-icon"><Check size={17} /></span><div><strong>{success.type === 'quick' ? 'Atendimento registrado' : 'Atividade criada'}</strong><small>{success.id} · {success.title}</small><div className="creation-toast-actions"><button onClick={() => { setSuccess(null); navigate(`/chamados/${success.id}#detalhes`) }}>Adicionar detalhes</button></div></div><button className="creation-toast-close" aria-label="Fechar aviso" onClick={() => setSuccess(null)}><X size={15} /></button></div>}</CreationContext.Provider>
+  return <CreationContext.Provider value={{ open }}>{children}{mode && <CreationModal key={`${mode}-${success?.id ?? ''}-${options.sourceDraftId ?? ''}`} mode={mode} options={options} setMode={setMode} data={data} save={save} active={active} close={close} created={created} />}{success && createPortal(<div className="creation-toast" role="status"><span className="creation-toast-icon"><Check size={17} /></span><div><strong>{success.type === 'quick' ? 'Atendimento registrado' : 'Atividade criada'}</strong><small>{success.id} · {success.title}</small><div className="creation-toast-actions"><button onClick={() => { setSuccess(null); navigate(`/chamados/${success.id}#detalhes`) }}>Adicionar detalhes</button></div></div><button className="creation-toast-close" aria-label="Fechar aviso" onClick={() => setSuccess(null)}><X size={15} /></button></div>, document.getElementById('toast-viewport')!)}</CreationContext.Provider>
 }
 
 function CreationModal({ mode, options, setMode, data, save, active, close, created }: { mode: Mode; options: CreationOptions; setMode: (mode: Mode) => void; data: Data; save: (data: Data) => void; active: string; close: () => void; created: (ticket: Ticket, repeat: boolean) => void }) {
